@@ -287,4 +287,42 @@ END_HTML
       assert_equal 1, premailer.processed_doc.search('script').length
     end
   end
+
+  def test_removing_comments
+    html = <<END_HTML
+    <html>
+    <head>
+    </head>
+    <body>
+      <!-- This is a regular comment -->
+      <!--[if IE 6]>
+        This is a downlevel-hidden comment
+      <![endif]-->
+      <!--[if expression]><!-->
+        This is a downlevel-revealed comment
+      <!--<![endif]-->
+    </body>
+    </html>
+END_HTML
+    [:nokogiri].each do |adapter|
+      premailer = Premailer.new(html, :with_html_string => true, :remove_comments => true, :remove_conditional_comments => true, :adapter => adapter)
+      premailer.to_inline_css
+      assert !premailer.processed_doc.to_s.include?('regular')
+      assert !premailer.processed_doc.to_s.include?('downlevel-hidden') && !premailer.processed_doc.to_s.include?('<!--[if IE 6]>')
+      assert premailer.processed_doc.to_s.include?('downlevel-revealed') && !premailer.processed_doc.to_s.include?('<!--[if expression]>')
+
+      premailer = Premailer.new(html, :with_html_string => true, :remove_comments => true, :remove_conditional_comments => false, :adapter => adapter)
+      premailer.to_inline_css
+      assert !premailer.processed_doc.to_s.include?('regular')
+      assert premailer.processed_doc.to_s.include?('downlevel-hidden') && premailer.processed_doc.to_s.include?('<!--[if IE 6]>')
+      assert premailer.processed_doc.to_s.include?('downlevel-revealed') && premailer.processed_doc.to_s.include?('<!--[if expression]>')
+
+      premailer = Premailer.new(html, :with_html_string => true, :remove_comments => false, :remove_conditional_comments => false, :adapter => adapter)
+      premailer.to_inline_css
+      assert premailer.processed_doc.to_s.include?('regular')
+      assert premailer.processed_doc.to_s.include?('downlevel-hidden') && premailer.processed_doc.to_s.include?('<!--[if IE 6]>')
+      assert premailer.processed_doc.to_s.include?('downlevel-revealed') && premailer.processed_doc.to_s.include?('<!--[if expression]>')
+    end
+  end
+
 end

@@ -178,6 +178,7 @@ class Premailer
   # @option options [Boolean] :remove_ids Remove ID attributes whenever possible and convert IDs used as anchors to hashed to avoid collisions in webmail programs.  Default is false.
   # @option options [Boolean] :remove_classes Remove class attributes. Default is false.
   # @option options [Boolean] :remove_comments Remove html comments. Default is false.
+  # @option options [Boolean] :remove_conditional_comments Remove conditional html comments. Default is true. Will only be honoured if <tt>remove_comments</tt> is true.
   # @option options [Boolean] :remove_scripts Remove <tt>script</tt> elements. Default is true.
   # @option options [Boolean] :preserve_styles Whether to preserve any <tt>link rel=stylesheet</tt> and <tt>style</tt> elements.  Default is false.
   # @option options [Boolean] :preserve_link_tags Whether to preserve any <tt>link rel=stylesheet</tt> elements.  Default is false.
@@ -198,6 +199,7 @@ class Premailer
                 :remove_classes => false,
                 :remove_ids => false,
                 :remove_comments => false,
+                :remove_conditional_comments => true,
                 :remove_scripts => true,
                 :css => [],
                 :css_to_attributes => true,
@@ -490,6 +492,10 @@ public
     return true if data.is_a?(IO) || data.is_a?(StringIO)
     return false if data =~ /^(http|https|ftp)\:\/\//i
     true
+  end
+
+  def self.conditional_comment?(str)
+    !!(str =~ /^\[if /) || !!(str =~ /^( )?<!\[endif/)
   end
 
   # from http://www.ruby-forum.com/topic/140101
